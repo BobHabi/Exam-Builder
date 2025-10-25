@@ -1,5 +1,5 @@
 # Exam Builder Frontend
-
+<!-- Synced from Codex environment -->
 This project provides a browser-based interface for building, managing, and analysing exams that draw questions from a Supabase-hosted question bank. It is designed to work with the `questions` table structure described in the project brief.
 
 The application is implemented as a standalone HTML/JavaScript experience that uses modern ES modules loaded directly from CDNs. No build tooling is required—open the `index.html` file in a modern browser to get started.
