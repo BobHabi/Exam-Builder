@@ -8,6 +8,8 @@ const LOCAL_HISTORY_KEY = 'exam-builder-history';
 const MAX_HISTORY = 15;
 const IMPORT_BATCH_SIZE = 50;
 const FETCH_PAGE_SIZE = 500;
+const PLACEHOLDER_URL = 'https://your-project.supabase.co';
+const PLACEHOLDER_KEY = 'public-anon-key';
 
 let supabaseClient = null;
 let cachedQuestions = [];
@@ -1075,7 +1077,7 @@ function applyInitialValues() {
     'Answer all questions. Circle the best answer for MCQ items and provide complete responses for constructed questions.';
 }
 
-export async function initApp({ supabaseUrl, supabaseKey }) {
+export async function initApp({ supabaseUrl, supabaseKey } = {}) {
   cacheDomElements();
   setupNavigation();
   setupEventHandlers();
@@ -1083,7 +1085,13 @@ export async function initApp({ supabaseUrl, supabaseKey }) {
   examHistory = loadHistory();
   renderHistory();
 
-  if (!supabaseUrl || !supabaseKey) {
+  const missingCredentials =
+    !supabaseUrl ||
+    !supabaseKey ||
+    `${supabaseUrl}`.trim() === PLACEHOLDER_URL ||
+    `${supabaseKey}`.trim() === PLACEHOLDER_KEY;
+
+  if (missingCredentials) {
     setConnectionStatus('Missing Supabase credentials', 'error');
     dom.importForm.querySelector('button[type="submit"]').disabled = true;
     dom.generateForm.querySelector('button[type="submit"]').disabled = true;

@@ -42,7 +42,8 @@ The application is implemented as a standalone HTML/JavaScript experience that u
 ## Configuration
 
 1. Duplicate `src/config.example.js` and rename the copy to `src/config.js`.
-2. Populate the new file with your Supabase project URL and public anon key:
+   - If you prefer, you can also edit `src/config.example.js` directly—the app now falls back to that file when a custom `config.js` is missing. Using a separate `config.js` keeps your real keys out of source control.
+2. Populate the configuration file with your Supabase project URL and public anon key:
 
    ```js
    export const SUPABASE_URL = 'https://your-project.supabase.co';

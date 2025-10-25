@@ -216,9 +216,34 @@
     </footer>
 
     <script type="module">
-      import { SUPABASE_URL, SUPABASE_ANON_KEY } from './src/config.js';
       import { initApp } from './src/main.js';
-      initApp({ supabaseUrl: SUPABASE_URL, supabaseKey: SUPABASE_ANON_KEY });
+
+      async function bootstrap() {
+        let configModule = {};
+
+        try {
+          configModule = await import('./src/config.js');
+        } catch (error) {
+          console.warn('Unable to load src/config.js, falling back to src/config.example.js.', error);
+          try {
+            configModule = await import('./src/config.example.js');
+          } catch (fallbackError) {
+            console.error('Failed to load fallback configuration file.', fallbackError);
+          }
+        }
+
+        const { SUPABASE_URL, SUPABASE_ANON_KEY } = configModule;
+        await initApp({ supabaseUrl: SUPABASE_URL, supabaseKey: SUPABASE_ANON_KEY });
+      }
+
+      bootstrap().catch((error) => {
+        console.error('Failed to initialise the Exam Builder.', error);
+        const status = document.getElementById('connectionStatus');
+        if (status) {
+          status.textContent = 'Failed to start app';
+          status.dataset.tone = 'error';
+        }
+      });
     </script>
   </body>
 </html>
