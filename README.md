@@ -42,12 +42,14 @@ The application is implemented as a standalone HTML/JavaScript experience that u
 ## Configuration
 
 1. Duplicate `src/config.example.js` and rename the copy to `src/config.js`.
-   - If you prefer, you can also edit `src/config.example.js` directly—the app now falls back to that file when a custom `config.js` is missing. Using a separate `config.js` keeps your real keys out of source control.
+   - Editing the example file directly also works, but keeping a dedicated `config.js` helps prevent leaking real keys.
 2. Populate the configuration file with your Supabase project URL and public anon key:
 
    ```js
-   export const SUPABASE_URL = 'https://your-project.supabase.co';
-   export const SUPABASE_ANON_KEY = 'your-public-anon-key';
+   window.__EXAM_BUILDER_CONFIG__ = {
+     SUPABASE_URL: 'https://your-project.supabase.co',
+     SUPABASE_ANON_KEY: 'your-public-anon-key',
+   };
    ```
 
 3. Ensure your Supabase project contains a `questions` table whose columns align with the import format (see the project brief for field definitions).

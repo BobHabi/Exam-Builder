@@ -215,34 +215,43 @@
       </p>
     </footer>
 
+    <script src="./src/config.js" defer></script>
+    <script src="./src/config.example.js" defer data-example-config></script>
     <script type="module">
       import { initApp } from './src/main.js';
 
-      async function bootstrap() {
-        let configModule = {};
+      function readSupabaseConfig() {
+        const userConfig = window.__EXAM_BUILDER_CONFIG__;
+        const exampleConfig = window.__EXAM_BUILDER_EXAMPLE_CONFIG__;
 
-        try {
-          configModule = await import('./src/config.js');
-        } catch (error) {
-          console.warn('Unable to load src/config.js, falling back to src/config.example.js.', error);
-          try {
-            configModule = await import('./src/config.example.js');
-          } catch (fallbackError) {
-            console.error('Failed to load fallback configuration file.', fallbackError);
-          }
+        const hasUserConfig =
+          userConfig && userConfig.SUPABASE_URL && userConfig.SUPABASE_ANON_KEY;
+
+        if (!hasUserConfig && userConfig) {
+          console.warn('Supabase config is missing values. Falling back to example config.');
         }
 
-        const { SUPABASE_URL, SUPABASE_ANON_KEY } = configModule;
-        await initApp({ supabaseUrl: SUPABASE_URL, supabaseKey: SUPABASE_ANON_KEY });
+        const activeConfig = hasUserConfig ? userConfig : exampleConfig;
+        return {
+          supabaseUrl: activeConfig?.SUPABASE_URL,
+          supabaseKey: activeConfig?.SUPABASE_ANON_KEY,
+        };
       }
 
-      bootstrap().catch((error) => {
-        console.error('Failed to initialise the Exam Builder.', error);
-        const status = document.getElementById('connectionStatus');
-        if (status) {
-          status.textContent = 'Failed to start app';
-          status.dataset.tone = 'error';
-        }
+      async function bootstrap() {
+        const { supabaseUrl, supabaseKey } = readSupabaseConfig();
+        await initApp({ supabaseUrl, supabaseKey });
+      }
+
+      window.addEventListener('DOMContentLoaded', () => {
+        bootstrap().catch((error) => {
+          console.error('Failed to initialise the Exam Builder.', error);
+          const status = document.getElementById('connectionStatus');
+          if (status) {
+            status.textContent = 'Failed to start app';
+            status.dataset.tone = 'error';
+          }
+        });
       });
     </script>
   </body>
