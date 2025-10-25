@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Exam Builder</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div>
+          <h1>Exam Builder</h1>
+          <p class="subtitle">Build, manage, and analyse assessments powered by Supabase.</p>
+        </div>
+        <div class="connection-status" id="connectionStatus">Disconnected</div>
+      </header>
+
+      <nav class="app-nav" role="tablist" aria-label="Exam Builder navigation">
+        <button class="nav-button active" data-target="importPanel" role="tab" aria-selected="true">Import</button>
+        <button class="nav-button" data-target="generatePanel" role="tab" aria-selected="false">Generate</button>
+        <button class="nav-button" data-target="managePanel" role="tab" aria-selected="false">Manage</button>
+        <button class="nav-button" data-target="statisticsPanel" role="tab" aria-selected="false">Statistics</button>
+        <button class="nav-button" data-target="historyPanel" role="tab" aria-selected="false">History</button>
+      </nav>
+
+      <main class="app-main">
+        <section id="importPanel" class="panel active" role="tabpanel">
+          <h2>Import questions</h2>
+          <p>
+            Upload CSV or JSON files that follow your Supabase <code>questions</code> table structure. Files are processed in
+            batches and inserted directly into Supabase.
+          </p>
+          <form id="importForm" class="card">
+            <div class="form-grid">
+              <label class="form-field">
+                <span>Course label (optional batch tag)</span>
+                <input type="text" id="importCourseLabel" placeholder="e.g. BIO1130" />
+              </label>
+              <label class="form-field">
+                <span>Review status applied to imported questions</span>
+                <select id="importReviewStatus">
+                  <option value="draft" selected>draft</option>
+                  <option value="approved">approved</option>
+                  <option value="needs_review">needs_review</option>
+                </select>
+              </label>
+            </div>
+            <label class="form-field">
+              <span>Select CSV or JSON file</span>
+              <input type="file" id="importFile" accept=".csv,.json" required />
+            </label>
+            <div class="form-actions">
+              <button type="submit" class="primary">Upload to Supabase</button>
+              <button type="button" id="resetImport" class="ghost">Reset</button>
+            </div>
+            <progress id="importProgress" value="0" max="100" hidden></progress>
+            <pre id="importLog" class="log"></pre>
+          </form>
+        </section>
+
+        <section id="generatePanel" class="panel" role="tabpanel" aria-hidden="true">
+          <h2>Generate exam</h2>
+          <form id="generateForm" class="card">
+            <fieldset class="fieldset">
+              <legend>Exam details</legend>
+              <div class="form-grid">
+                <label class="form-field">
+                  <span>Exam title</span>
+                  <input type="text" id="examTitle" placeholder="Midterm Assessment" required />
+                </label>
+                <label class="form-field">
+                  <span>Instructor name</span>
+                  <input type="text" id="instructorName" placeholder="Dr. Jane Doe" />
+                </label>
+                <label class="form-field">
+                  <span>Course</span>
+                  <input type="text" id="examCourse" placeholder="BIO1130" />
+                </label>
+                <label class="form-field">
+                  <span>Duration</span>
+                  <input type="text" id="examDuration" placeholder="90 minutes" />
+                </label>
+              </div>
+              <label class="form-field">
+                <span>Instructions</span>
+                <textarea id="examInstructions" rows="3" placeholder="Answer all questions. Show your work where applicable."></textarea>
+              </label>
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend>Filters</legend>
+              <div class="form-grid">
+                <label class="form-field">
+                  <span>Keyword(s)</span>
+                  <input type="text" id="keywordFilter" placeholder="e.g. mitochondria, adaptation" />
+                  <small>Separate multiple keywords with commas.</small>
+                </label>
+                <label class="form-field">
+                  <span>Chapter / topic text</span>
+                  <input type="text" id="chapterFilter" placeholder="Optional chapter filter" />
+                </label>
+                <label class="form-field">
+                  <span>Review status</span>
+                  <select id="reviewStatusFilter">
+                    <option value="">Any</option>
+                    <option value="approved">approved</option>
+                    <option value="draft">draft</option>
+                    <option value="needs_review">needs_review</option>
+                  </select>
+                </label>
+              </div>
+              <div class="form-grid">
+                <label class="form-field">
+                  <span>Limit search to course label</span>
+                  <input type="text" id="courseFilter" placeholder="Optional course code" />
+                </label>
+                <label class="form-field">
+                  <span>Maximum questions to sample</span>
+                  <input type="number" id="questionLimit" min="1" value="200" />
+                </label>
+              </div>
+              <div class="chip-group" id="typeControls">
+                <header>
+                  <h3>Question types</h3>
+                  <button type="button" class="ghost" id="refreshTypes">Refresh types</button>
+                </header>
+                <p>Select the number of questions to include per type. Leave blank or zero to skip a type.</p>
+                <div id="typeList" class="dynamic-grid"></div>
+              </div>
+              <div class="chip-group" id="difficultyControls">
+                <header>
+                  <h3>Difficulty</h3>
+                  <button type="button" class="ghost" id="refreshDifficulty">Refresh levels</button>
+                </header>
+                <p>Optional fine-grained control over question counts per difficulty.</p>
+                <div id="difficultyList" class="dynamic-grid"></div>
+              </div>
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend>Output options</legend>
+              <div class="form-grid">
+                <label class="form-field checkbox">
+                  <input type="checkbox" id="shuffleChoices" checked />
+                  <span>Shuffle choices for MCQ</span>
+                </label>
+                <label class="form-field checkbox">
+                  <input type="checkbox" id="showQuestionIds" checked />
+                  <span>Display question IDs</span>
+                </label>
+                <label class="form-field checkbox">
+                  <input type="checkbox" id="includeAnswers" checked />
+                  <span>Include answer key after exam</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <div class="form-actions">
+              <button type="submit" class="primary">Generate exam</button>
+              <button type="button" id="exportPdf" class="ghost" disabled>Export PDF</button>
+              <button type="button" id="printExam" class="ghost" disabled>Print</button>
+            </div>
+            <div id="generateError" class="error" role="alert" hidden></div>
+          </form>
+
+          <article id="examPreview" class="card exam-preview" aria-live="polite"></article>
+        </section>
+
+        <section id="managePanel" class="panel" role="tabpanel" aria-hidden="true">
+          <h2>Manage questions</h2>
+          <div class="card">
+            <h3>Current generated exam</h3>
+            <p>Review questions pulled into the most recent exam and push updates back to Supabase.</p>
+            <div id="manageCurrentExam"></div>
+          </div>
+
+          <div class="card">
+            <h3>Search question by ID</h3>
+            <form id="searchForm" class="inline-form">
+              <label class="form-field">
+                <span>Question unique ID</span>
+                <input type="text" id="searchId" required placeholder="COURSE_TOPIC_TYPE_001" />
+              </label>
+              <button type="submit" class="primary">Find question</button>
+            </form>
+            <div id="searchResult"></div>
+          </div>
+        </section>
+
+        <section id="statisticsPanel" class="panel" role="tabpanel" aria-hidden="true">
+          <h2>Question statistics</h2>
+          <div class="card" id="globalStats">Loading statistics…</div>
+          <div class="card" id="examStats">Generate an exam to see breakdowns.</div>
+        </section>
+
+        <section id="historyPanel" class="panel" role="tabpanel" aria-hidden="true">
+          <h2>Exam history</h2>
+          <p>Your latest generated exams are stored locally for quick reference. Select one to reopen it.</p>
+          <div id="historyList" class="card history-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <footer class="app-footer">
+      <p>
+        Configure your Supabase credentials in <code>src/config.js</code>. For a fresh copy, duplicate
+        <code>src/config.example.js</code>.
+      </p>
+    </footer>
+
+    <script type="module">
+      import { SUPABASE_URL, SUPABASE_ANON_KEY } from './src/config.js';
+      import { initApp } from './src/main.js';
+      initApp({ supabaseUrl: SUPABASE_URL, supabaseKey: SUPABASE_ANON_KEY });
+    </script>
+  </body>
+</html>
