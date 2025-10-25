@@ -1,0 +1,17 @@
+{
+  "name": "exam-builder",
+  "version": "1.0.0",
+  "description": "Browser-based exam builder frontend for Supabase question banks",
+  "type": "module",
+  "scripts": {
+    "serve": "python -m http.server 4173"
+  },
+  "keywords": [
+    "supabase",
+    "exam",
+    "assessment",
+    "frontend"
+  ],
+  "author": "",
+  "license": "MIT"
+}

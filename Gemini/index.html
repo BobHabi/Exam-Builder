@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Builder</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 1200px; margin: auto; line-height: 1.6; }
+        .filter-section, .output-section { margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; margin-top: 10px; }
+        select, input[type="text"], input[type="number"], button { margin-bottom: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; width: 100%; }
+        select { width: auto; min-width: 200px; }
+        .checkbox-group label { display: inline-block; margin-right: 15px; font-weight: normal; }
+        .checkbox-group input { margin-right: 5px; width: auto; }
+        .output-options label { display: inline-block; margin-right: 15px; font-weight: normal;}
+        .output-options input { width: auto; margin-right: 5px;}
+        #exam-output { border: 1px dashed #eee; padding: 15px; margin-top: 15px; min-height: 100px; background-color: #f9f9f9; }
+        #status { margin-top: 10px; font-weight: bold; min-height: 1.2em; }
+        .error { color: red; }
+        .success { color: green; }
+        h2 { border-bottom: 2px solid #007bff; padding-bottom: 5px; color: #007bff; margin-top: 0;}
+        button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; width: auto; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        button:hover:not(:disabled) { background-color: #0056b3; }
+        .button-group button { margin-right: 10px; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .pdf-page-break { page-break-before: always !important; height: 1px; }
+        #student-output, #answer-output { margin-bottom: 10px;}
+         @media print { .pdf-page-break { page-break-before: always; } body { margin: 0; padding: 0;} #exam-output { border: none; padding: 0; margin: 0;} }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+
+    <h1>Exam Builder</h1>
+
+    <div class="filter-section">
+        <h2>Filters</h2>
+        <div class="filter-grid">
+            <div>
+                <label for="course-select">Course:</label>
+                <select id="course-select">
+                    <option value="">-- Select Course --</option>
+                    </select>
+            </div>
+            <div>
+                <label>Difficulty:</label>
+                <div id="difficulty-filter" class="checkbox-group">
+                     <label><input type="checkbox" name="difficulty" value="easy"> Easy</label>
+                     <label><input type="checkbox" name="difficulty" value="medium"> Medium</label>
+                     <label><input type="checkbox" name="difficulty" value="hard"> Hard</label>
+                </div>
+            </div>
+            <div>
+                <label>Question Type:</label>
+                <div id="type-filter" class="checkbox-group">
+                    </div>
+            </div>
+             <div>
+                <label for="topic-include">Topic/Chapter Includes:</label>
+                <input type="text" id="topic-include" placeholder="e.g., 1; 5; Adaptation"> </div>
+             <div>
+                <label for="topic-exclude">Topic/Chapter Excludes:</label>
+                <input type="text" id="topic-exclude" placeholder="e.g., 3; Metabolism"> </div>
+            <div>
+                <label for="tags-include">Keywords Include (Any):</label> <input type="text" id="tags-include" placeholder="e.g., genetics; evolution">
+            </div>
+            <div>
+                <label for="search-text">Search Text:</label>
+                <input type="text" id="search-text" placeholder="Search question, options, etc.">
+            </div>
+            <div>
+                <label for="max-questions">Max Questions (Cap):</label>
+                <input type="number" id="max-questions" min="1" placeholder="Optional overall limit">
+            </div>
+        </div>
+
+        <h2>Output Options</h2>
+        <div class="output-options">
+             <label><input type="checkbox" id="shuffle-mcq" checked> Shuffle MCQ Choices</label>
+             <label><input type="checkbox" id="show-ref-id" checked> Show ID</label> </div>
+
+        <div class="button-group">
+            <button id="generate-btn">Generate Exam (HTML)</button>
+            <button id="pdf-btn" disabled>Export as PDF</button>
+        </div>
+        <div id="status"></div>
+    </div>
+
+    <div class="output-section">
+        <h2>Generated Exam Preview</h2>
+        <div id="exam-output">
+             <div id="student-output"></div>
+             <div id="answer-output"></div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+
+</body>
+</html>

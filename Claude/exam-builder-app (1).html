@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Builder Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 1.1em; }
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            background: transparent;
+            font-size: 1em;
+        }
+        .tab:hover { background: #e9ecef; }
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+        .content { padding: 40px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        .form-group { margin-bottom: 20px; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+        input[type="text"], input[type="number"], input[type="file"], select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea { resize: vertical; min-height: 100px; }
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+        .badge-primary { background: #667eea; color: white; }
+        .badge-success { background: #28a745; color: white; }
+        .badge-warning { background: #ffc107; color: #212529; }
+        .badge-info { background: #17a2b8; color: white; }
+        .question-item {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 10px;
+        }
+        .question-item:last-child { border-bottom: none; }
+        .question-meta {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+        .hidden { display: none; }
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; }
+            .header, .tabs, .btn { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Exam Builder Pro</h1>
+            <p>Professional Question Bank Management & Exam Generation System</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('import', event)">📥 Import</button>
+            <button class="tab" onclick="switchTab('manage', event)">✏️ Manager</button>
+            <button class="tab" onclick="switchTab('browse', event)">📖 Browse</button>
+            <button class="tab" onclick="switchTab('generate', event)">✨ Generate</button>
+            <button class="tab" onclick="switchTab('stats', event)">📊 Stats</button>
+        </div>
+
+        <div class="content">
+            <!-- Import Tab -->
+            <div id="import" class="tab-content active">
+                <div class="section">
+                    <h2>Import Questions</h2>
+                    <div id="importAlert"></div>
+                    <div class="form-group">
+                        <label>Select File (CSV or JSON)</label>
+                        <input type="file" id="fileInput" accept=".csv,.json">
+                    </div>
+                    <div class="form-group">
+                        <label>Or Paste JSON Data</label>
+                        <textarea id="jsonInput" placeholder='{"questions": [...]}'></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="importQuestions()">Import Questions</button>
+                    <button class="btn btn-secondary" onclick="showSampleFormat()">Show Sample</button>
+                </div>
+            </div>
+
+            <!-- Manager Tab -->
+            <div id="manage" class="tab-content">
+                <div class="section">
+                    <h2>Question Manager</h2>
+                    <div id="manageAlert"></div>
+                    <div class="filter-grid">
+                        <div class="form-group">
+                            <label>Search</label>
+                            <input type="text" id="manageSearch" placeholder="ID or text...">
+                        </div>
+                        <div class="form-group">
+                            <label>Course</label>
+                            <select id="manageCourse"><option value="">All</option></select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="loadManageQuestions()">Search</button>
+                    <div id="manageResults"></div>
+                </div>
+            </div>
+
+            <!-- Browse Tab -->
+            <div id="browse" class="tab-content">
+                <div class="section">
+                    <h2>Browse Questions</h2>
+                    <div class="filter-grid">
+                        <div class="form-group">
+                            <label>Search</label>
+                            <input type="text" id="searchText" placeholder="Search...">
+                        </div>
+                        <div class="form-group">
+                            <label>Course</label>
+                            <select id="browseCourse"><option value="">All</option></select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="loadQuestions()">Search</button>
+                    <div id="browseResults"></div>
+                </div>
+            </div>
+
+            <!-- Generate Tab -->
+            <div id="generate" class="tab-content">
+                <div class="section">
+                    <h2>Generate Exam</h2>
+                    <div id="generateAlert"></div>
+                    <div class="filter-grid">
+                        <div class="form-group">
+                            <label>Course</label>
+                            <select id="genCourse"><option value="">Select</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Total Questions</label>
+                            <input type="number" id="numQuestions" value="25" min="1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><input type="checkbox" id="shuffleChoices" checked> Shuffle MCQ choices</label>
+                    </div>
+                    <button class="btn btn-primary" onclick="generateExam()">Generate Exam</button>
+                    <div id="examSection" class="hidden">
+                        <h3>Customize</h3>
+                        <div class="filter-grid">
+                            <input type="text" id="examTitle" value="Midterm Exam" placeholder="Title">
+                            <input type="text" id="examDate" placeholder="Date">
+                        </div>
+                        <button class="btn btn-success" onclick="exportExam()">Print/Export</button>
+                    </div>
+                    <div id="examOutput" class="hidden"></div>
+                </div>
+            </div>
+
+            <!-- Stats Tab -->
+            <div id="stats" class="tab-content">
+                <div class="section">
+                    <h2>Statistics</h2>
+                    <div id="statsContainer">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://tzpnqvuyksxrrbrxlcxe.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6cG5xdnV5a3N4cnJicnhsY3hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyNjA5MjEsImV4cCI6MjA3NjgzNjkyMX0.UUrd8OSlaBPuNDcRSJIvYS4jzEKvLv95wqPVL7aOg5g';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: { persistSession: false, autoRefreshToken: false }
+        });
+
+        let currentExamQuestions = [];
+
+        function switchTab(tabName, event) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            if (tabName === 'stats') loadStatistics();
+            if (tabName === 'manage') loadManageFilters();
+            if (tabName === 'browse') loadBrowseFilters();
+            if (tabName === 'generate') loadGenerateFilters();
+        }
+
+        async function importQuestions() {
+            const jsonText = document.getElementById('jsonInput').value.trim();
+            if (!jsonText) {
+                showAlert('importAlert', 'Please paste JSON data or click Show Sample', 'error');
+                return;
+            }
+
+            let data;
+            try {
+                data = JSON.parse(jsonText);
+            } catch (err) {
+                showAlert('importAlert', 'Invalid JSON: ' + err.message, 'error');
+                return;
+            }
+
+            if (!data.questions || !Array.isArray(data.questions)) {
+                showAlert('importAlert', 'Data must contain a "questions" array', 'error');
+                return;
+            }
+
+            showAlert('importAlert', `Importing ${data.questions.length} questions...`, 'info');
+
+            let imported = 0;
+            let skipped = 0;
+            let errors = [];
+
+            for (const q of data.questions) {
+                try {
+                    if (!q.unique_id) {
+                        errors.push(`Question missing unique_id`);
+                        skipped++;
+                        continue;
+                    }
+
+                    const checkUrl = `${SUPABASE_URL}/rest/v1/questions?unique_id=eq.${encodeURIComponent(q.unique_id)}&select=id`;
+                    const checkResponse = await fetch(checkUrl, {
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`
+                        }
+                    });
+
+                    if (checkResponse.ok) {
+                        const existing = await checkResponse.json();
+                        if (existing && existing.length > 0) {
+                            skipped++;
+                            continue;
+                        }
+                    }
+
+                    let options = q.options;
+                    if (typeof options === 'string') {
+                        try { options = JSON.parse(options); } catch (e) { options = null; }
+                    }
+
+                    const insertData = {
+                        unique_id: q.unique_id,
+                        course: q.course || '',
+                        question_text: q.question_text || '',
+                        question_type: q.question_type || '',
+                        difficulty: q.difficulty || '',
+                        chapter_number: q.chapter_number ? parseInt(q.chapter_number) : null,
+                        chapter_name: q.chapter_name || '',
+                        keywords: q.keywords || '',
+                        options: options,
+                        correct_answer: q.correct_answer || '',
+                        answer_summary: q.answer_summary || '',
+                        detailed_explanation: q.detailed_explanation || '',
+                        question_source: q.question_source || '',
+                        review_status: q.review_status || 'draft'
+                    };
+
+                    const insertUrl = `${SUPABASE_URL}/rest/v1/questions`;
+                    const insertResponse = await fetch(insertUrl, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify(insertData)
+                    });
+
+                    if (!insertResponse.ok) {
+                        const errorText = await insertResponse.text();
+                        errors.push(`${q.unique_id}: ${errorText}`);
+                    } else {
+                        imported++;
+                    }
+                } catch (err) {
+                    errors.push(`${q.unique_id}: ${err.message}`);
+                }
+            }
+
+            let message = `✅ Imported: ${imported}<br>`;
+            if (skipped > 0) message += `⏭️ Skipped: ${skipped}<br>`;
+            if (errors.length > 0) message += `❌ Errors: ${errors.length}`;
+
+            showAlert('importAlert', message, imported > 0 ? 'success' : 'error');
+            document.getElementById('jsonInput').value = '';
+        }
+
+        function showSampleFormat() {
+            const sample = {
+                "questions": [{
+                    "unique_id": "BIO101_MCQ_001",
+                    "course": "Biology 101",
+                    "question_text": "What is the powerhouse of the cell?",
+                    "question_type": "MCQ",
+                    "difficulty": "Easy",
+                    "chapter_number": 3,
+                    "chapter_name": "Cell Biology",
+                    "keywords": "cell, mitochondria, energy",
+                    "options": {"A": "Nucleus", "B": "Mitochondria", "C": "Ribosome", "D": "Chloroplast"},
+                    "correct_answer": "B",
+                    "answer_summary": "Mitochondria produce ATP",
+                    "detailed_explanation": "Mitochondria generate most of the cell's ATP supply.",
+                    "question_source": "Claude",
+                    "review_status": "approved"
+                }]
+            };
+            document.getElementById('jsonInput').value = JSON.stringify(sample, null, 2);
+            showAlert('importAlert', '✅ Sample loaded!', 'success');
+        }
+
+        async function loadStatistics() {
+            const container = document.getElementById('statsContainer');
+            try {
+                const { data, error } = await supabase.from('questions').select('*');
+                if (error) throw error;
+                container.innerHTML = `<h3>Total Questions: ${data.length}</h3>`;
+            } catch (err) {
+                container.innerHTML = `Error: ${err.message}`;
+            }
+        }
+
+        async function loadManageFilters() {
+            try {
+                const { data } = await supabase.from('questions').select('course');
+                const courses = [...new Set(data.map(q => q.course).filter(c => c))];
+                const select = document.getElementById('manageCourse');
+                select.innerHTML = '<option value="">All</option>';
+                courses.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadManageQuestions() {
+            showAlert('manageAlert', 'Feature coming soon!', 'info');
+        }
+
+        async function loadBrowseFilters() {
+            try {
+                const { data } = await supabase.from('questions').select('course');
+                const courses = [...new Set(data.map(q => q.course).filter(c => c))];
+                const select = document.getElementById('browseCourse');
+                select.innerHTML = '<option value="">All</option>';
+                courses.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadQuestions() {
+            const search = document.getElementById('searchText').value;
+            const course = document.getElementById('browseCourse').value;
+
+            let query = supabase.from('questions').select('*');
+            if (course) query = query.eq('course', course);
+            if (search) query = query.ilike('question_text', `%${search}%`);
+
+            const { data, error } = await query.limit(50);
+            const container = document.getElementById('browseResults');
+
+            if (error) {
+                container.innerHTML = `<div class="alert alert-error">Error: ${error.message}</div>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">No questions found.</div>';
+                return;
+            }
+
+            let html = `<h3>Found ${data.length} question(s)</h3>`;
+            data.forEach(q => {
+                html += `
+                    <div class="question-item">
+                        <div class="question-meta">
+                            <span class="badge badge-primary">${q.unique_id}</span>
+                            <span class="badge badge-info">${q.course}</span>
+                        </div>
+                        <p>${q.question_text}</p>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        async function loadGenerateFilters() {
+            try {
+                const { data } = await supabase.from('questions').select('course');
+                const courses = [...new Set(data.map(q => q.course).filter(c => c))];
+                const select = document.getElementById('genCourse');
+                select.innerHTML = '<option value="">Select</option>';
+                courses.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function generateExam() {
+            const course = document.getElementById('genCourse').value;
+            const num = parseInt(document.getElementById('numQuestions').value);
+
+            if (!course) {
+                showAlert('generateAlert', 'Please select a course', 'error');
+                return;
+            }
+
+            const { data, error } = await supabase.from('questions').select('*').eq('course', course);
+
+            if (error) {
+                showAlert('generateAlert', 'Error: ' + error.message, 'error');
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                showAlert('generateAlert', 'No questions found', 'error');
+                return;
+            }
+
+            const shuffled = data.sort(() => 0.5 - Math.random());
+            currentExamQuestions = shuffled.slice(0, Math.min(num, data.length));
+
+            showAlert('generateAlert', `✅ Exam generated with ${currentExamQuestions.length} questions!`, 'success');
+            document.getElementById('examSection').classList.remove('hidden');
+            document.getElementById('examDate').value = new Date().toLocaleDateString();
+        }
+
+        function exportExam() {
+            if (currentExamQuestions.length === 0) {
+                showAlert('generateAlert', 'Generate an exam first', 'error');
+                return;
+            }
+
+            const title = document.getElementById('examTitle').value;
+            const date = document.getElementById('examDate').value;
+            const output = document.getElementById('examOutput');
+            output.classList.remove('hidden');
+
+            let html = `<div style="padding: 40px; font-family: Times New Roman, serif;">
+                <h1 style="text-align: center;">${title}</h1>
+                <p style="text-align: center;">Date: ${date}</p>
+                <hr style="margin: 20px 0;">`;
+
+            currentExamQuestions.forEach((q, i) => {
+                html += `<div style="margin-bottom: 30px;">
+                    <p><strong>${i + 1}. ${q.question_text}</strong></p>
+                    <p style="font-size: 0.9em; color: #666;">ID: ${q.unique_id}</p>
+                </div>`;
+            });
+
+            html += '</div>';
+            output.innerHTML = html;
+            
+            setTimeout(() => window.print(), 500);
+        }
+
+        function showAlert(id, message, type) {
+            const el = document.getElementById(id);
+            el.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => el.innerHTML = '', 10000);
+        }
+
+        // Initialize
+        loadStatistics();
+    </script>
+</body>
+</html>
